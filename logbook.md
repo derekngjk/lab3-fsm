@@ -65,3 +65,8 @@ We implement the testbench to interface with Vbuddy as follows. See comments for
 ![F1 sequence testbench](images/[task2]fsm_tb.png)
 
 This gives us the following output. When we press the switch, the lights light up one by one until all 8 are lighted up, then it goes back to no lights.
+
+![F1 vbuddy output 1](images/[task2]vbd_out_1.jpg)
+![F1 vbuddy output 2](images/[task2]vbd_out_2.jpg)
+![F1 vbuddy output 3](images/[task2]vbd_out_3.jpg)
+![F1 vbuddy output 4](images/[task2]vbd_out_4.jpg)
