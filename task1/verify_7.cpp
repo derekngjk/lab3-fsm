@@ -70,6 +70,9 @@ TEST_F(TestDut, InitialStateTest)
  */
 int generateLFSR7(int state)
 {
+    // state is the current 7-bit number.
+    // we want to return the next number in the sequence
+    // the next few lines basically uses right-shifting and ANDing to extract the 7 individual bits (0s or 1s)
     int b0 = (state >> 0) & 1;
     int b1 = (state >> 1) & 1;
     int b2 = (state >> 2) & 1;
@@ -78,6 +81,9 @@ int generateLFSR7(int state)
     int b5 = (state >> 5) & 1;
     int b6 = (state >> 6) & 1;
 
+    // get the new number, so b5 becomes the new MSB, b4 becomes the new b5 and so on
+    // then the new b0 is the old b2 XOR b6
+    // bitwise OR just a way to concat the bits back into a 7-bit number
     return (b5 << 6 | b4 << 5 | b3 << 4 | b2 << 3 | b1 << 2 | b0 << 1 |
             (b2 ^ b6));
 }
