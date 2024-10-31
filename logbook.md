@@ -108,3 +108,54 @@ This gives us the following output. We can see that the FSM state changes every 
 ![vbuddy output 2](images/[task3]vbd_out_2.PNG)
 ![vbuddy output 3](images/[task3]vbd_out_3.PNG)
 ![vbuddy output 4](images/[task3]vbd_out_4.PNG)
+
+# Task 4
+
+Finally we want to combine the multiple components together to create the full version of the F1 light design as follows:
+
+![full F1 circuit diagram](images/F1_full.jpg)
+
+The clktick module is as before, the output tick goes high for 1 pulse every approximately 1 second. A new block delay.sv is provided (see lecture 5 slides 16 and 17). How it works is that once it detects the rising edge on the input trigger, it will wait for n clock cycles before producing a 1-cycle pulse on time_out. The state diagram of delay.sv is as follows:
+
+![Delay.sv state diagram](images/[task4]delay_state_diagram.jpg)
+
+Broad overview: Initially the FSM is in the idle state and output is 0. Once the trigger goes high, it will shift to the counting state and start counting down from n - 1. Once the count reaches 0, it will go into the time_out state where the output is 1 for one cycle. After being in the time_out state for one_cycle, if the trigger is low, it will go back into the idle state and listen for the next rising trigger. Else if the trigger remains high, it will move into wait_low and wait for the trigger to go low before it goes back into the idle state. This means that the FSM can only be triggered again (i.e. shift into the counting state) after the trigger has returned to 0.
+
+With reference to the full F1 circuit diagram, we need to modify the f1_fsm.sv module such that it takes in a trigger input. This trigger input will be controlled by vbdFlag() which essentially kicks off the whole sequence and causes the lights to start lighting up one by one. Additionally, we also need the f1_fsm.sv to provide two additional outputs. cmd_seq will be high during the sequencing of data_out from 8'b1 to 8'hff, and cmd_delay which triggers the start of the delay.sv component. We also notice that the delay.sv takes in as input K, the output of a 7-bit LFSR which is a pseudo-random binary number.
+
+## Overview of what happens in the full circuit
+
+Hence, overall what happens in the full F1 circuit is that once we press the rotary encoder switch, it will trigger f1_fsm.sv and set cmd_seq to 1. This causes the MUX to transmit the tick output from clktick.sv. This serves as the enable input of f1_fsm.sv. Hence, after pressing the switch, the effect is that the F1 lights start to light up one by one, every approximately 1 second. Then once all 8 lights have been lighted up, cmd_delay will be set to high. This causes the delay.sv component to start counting down from input K, which is a pseudo-random number. Additionally, cmd_seq will be set to 0, so that once delay.sv counts down to 0, time_out will go high for one cycle, triggering the enable of f1_fsm.sv and causing all lights to turn off.
+
+Thus, the visual effect is that when we press the encoder switch, the lights light up one by one at 1 second intervals. Once all 8 have been lighted up, the circuit will wait for a random amount of time, then all lights will go off.
+
+To implement this, we first need to change the f1_fsm.sv such that it depends on the trigger input to kick off the sequence, and then it has the two additional outputs cmd_seq and cmd_delay. Note that upon initialisation, we initialise cmd_seq and cmd_delay to 0. See comments for details
+
+![f1_fsm new implementation](images/[task4]f1_fsm_sv.png)
+
+Now that we have edited the f1_fsm.sv, we just need to tie them up together in the top.sv, as follows:
+
+![top.sv implementation](images/[task4]top_sv.png)
+
+The top.sv implementation is fairly straightforward. We just need to specify the internal signals cmd_seq and cmd_delay which are output from f1_fsm and fed back into clktick and delay respectively. We also declare the internal signals tick, prbs and time_out, which are the output of clktick, output of lfsr_7, and output of delay respectively. Finally, we implement the MUX using a simple ternary operator, where we pass in tick as the input to f1_fsm.en if cmd_seq = 1, else we pass in time_out.
+
+Hence, overall to recap how it works, when we press the switch, we set cmd_seq to 1, after which we do not update cmd_seq anymore. This will enable clktick, thus causing clktick to produce a tick every 1 second. This also configures the MUX to transmit tick to the enable of f1_fsm, thus effectively causing the fsm to change state every second. Once we hit state 8 (all lighted up), we set cmd_seq back to 0 to disable clktick, and we set cmd_delay to 1 to trigger delay, and transmit time_out to f1_fsm.en, thus causing the fsm to go back to state 0 after a random number of cycles. Once it goes back to 0, cmd_delay and cmd_seq are both 0, hence we are back to the idle state and the cycle can begin again.
+
+The last step is to interface the top module with the Vbuddy. 
+
+![top.sv testbench](images/[task4]top_tb.png)
+
+The testbench is very straightforward. We simply need to update top -> N = vbdValue() and top -> trigger = vbdFlag() every cycle. Internally, the top level module already does all the updating of the variables, so we simply need to pass top -> data_out to vbdBar() to see the lights in action. The output is shown below, although the static images do not capture the timing information.
+
+![full F1 output 1](images/[task4]vbd_out_1.jpg)
+![full F1 output 2](images/[task4]vbd_out_2.jpg)
+![full F1 output 3](images/[task4]vbd_out_3.jpg)
+
+The last step is to perform the reaction time testing. To do this, we first initialise 2 variables before the start of the simulation, `in_sequence` and `is_timing`, to keep track of whether the fsm is currently in the counting sequence, and whether we are currently timing the interval between the lights out and the button press. We then add the following code to the testbench. See comments for details. Effectively, we want it to be such that if we press the rotary switch during the sequence, we don't want it to do anything. And after the lights go off, we want the first button press after the lights go off to stop the stopwatch, and not start a new sequence. Then, another button press starts a new sequence.
+
+![reaction time testbench](images/[task4]rxn_time_tb.png)
+
+This gives the following reaction time displayed on the 7 segment display. The first one shows a faster reaction time of 0xCD milliseconds and the second image shows the measured time after letting it run for approximately 5 seconds.
+
+![reaction time output slow](images/[task4]vbd_rxn_1.jpg)
+![reaction time output fast](images/[task4]vbd_rxn_2.jpg)

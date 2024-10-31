@@ -1,5 +1,5 @@
 module delay #(
-    parameter WIDTH = 10    // no of bits in delay counter
+    parameter WIDTH = 7    // no of bits in delay counter
 )(
     input   logic               clk,        // clock signal
     input   logic               rst,        // reset signal
@@ -15,12 +15,12 @@ module delay #(
     my_state current_state, next_state;
 
     // counter
-    always_ff @(posedge clk)
+    always_ff @(posedge clk, posedge rst)
         if (rst | trigger | count=={WIDTH{1'b0}}) count <= n - 1'b1;
         else                                count <= count - 1'b1;
 
     // state transition
-    always_ff @(posedge clk)
+    always_ff @(posedge clk, posedge rst)
         if (rst)    current_state <= IDLE;
         else        current_state <= next_state; 
 
