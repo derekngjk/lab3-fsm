@@ -28,7 +28,7 @@ Note that there is a delay. i.e. at the begining of cycle 3, N = 0 but tick is s
 It is only at the begining of cycle 4 that tick is 1.
 */
 
-always_ff @ (posedge clk)
+always_ff @ (posedge clk, posedge rst)
     if (rst) begin
         tick <= 1'b0;
         count <= N;  

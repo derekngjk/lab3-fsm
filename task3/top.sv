@@ -1,4 +1,4 @@
-module lightToggler1s (
+module top (
     input logic en,
     input logic rst,
     input logic clk,
