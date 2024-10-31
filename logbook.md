@@ -39,3 +39,29 @@ Hence, from this equation, we can implement the LFSR such that on each clock cyc
 Again, we run the unit tests, which cycle over all 128 elements and check if the output is equal to the expected value.
 
 ![LFSR-7 Verify](images/[task1]lfsr_7_verify.png)
+
+# Task 2
+
+## Formula 1 Light Sequence FSM
+
+We now want to implement a FSM that cycles through a sequence of states. We start from the idle state 00000000, then we go to 00000001, 00000011, 00000111 etc until we reach 11111111, and then we go back to all 0s. The Moore diagram of the state machine is shown as follows:
+
+![F1 sequence Moore diagram](images/state_diag.jpg)
+
+We implement the FSM in system verilog as follows. See comments for details
+
+![F1 SV](images/[task2]fsm_sv.png)
+
+This gives us the following test output. Again the tests is just cycling through the sequence to verify that the output matches the expected.
+
+![F1 sequence test](images/[task2]fsm_sv_verify.png)
+
+## Interface with VBuddy light strip
+
+Next we want to connect the FSM to vbuddy. We want to use the switch on the rotary encoder with vbdFlag() set to mode 1 i.e. single-shot mode. Recall this is the mode where pressing the switch will set vbdFlag() to 1, then after we read it, it will immediately go back to 0. We can then use the vbdFlag() value as the en input, such that whenever we press the switch and read the flag value, the fsm will go to the next state, then afterwards vbdFlag() will go back to 0 so the FSM stays until we press the switch again.
+
+We implement the testbench to interface with Vbuddy as follows. See comments for details
+
+![F1 sequence testbench](images/[task2]fsm_tb.png)
+
+This gives us the following output. When we press the switch, the lights light up one by one until all 8 are lighted up, then it goes back to no lights.
