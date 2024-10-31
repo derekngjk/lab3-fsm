@@ -70,3 +70,41 @@ This gives us the following output. When we press the switch, the lights light u
 ![F1 vbuddy output 2](images/[task2]vbd_out_2.jpg)
 ![F1 vbuddy output 3](images/[task2]vbd_out_3.jpg)
 ![F1 vbuddy output 4](images/[task2]vbd_out_4.jpg)
+
+# Task 3
+
+## ClkTick Module
+
+We start with clktick.sv, which is a module that takes in a clock as well as an input N, and then it outputs a pulse lasting for one cycle every N + 1 cycles. This is implemented as follows. See comments for details
+
+![clktick sv implementation](images/[task3]clktick_sv.png)
+
+Next we have the clktick test bench. How this works is that we set top -> N to be vbdValue(), the value of the rotary encoder. So every cycle, we do the evaluation, which means that top -> tick will go high every N + 1 cycles. And then whenever top -> tick is high, we toggle the variable `lights` between 00000000 and 11111111, i.e. switching on and off all 8 lights. So e.g. if N is set to 49, then every 50 cycles, the lights will toggle. 
+
+The goal then is to rotate the rotary encoder (thus adjusting N), until we observe that the lights toggle at a rate of 1s (i.e. top - tick goes high every 1s). Upon simulation, we see that setting vbdValue to 42 allows us to toggle the lights at a rate of approximately 1s (by syncing with a metronome set to 60 bpm).
+
+![clktick lights off](images/[task3]lights_off.jpg)
+![clktick lights on](images/[task3]lights_on.jpg)
+
+## Combining Clktick and F1 FSM
+
+We now want to combine clktick.sv with f1_fsm.sv so that the F1 light sequence cycles through automatically with 1s delay per state transition, as follows:
+
+![top level circuit diagram](images/f1_sequence.jpg)
+
+Basically, we want to pass in the tick output of clktick.sv as the enable input of f1_fsm.sv. So that suppose in cycle i, if clktick outputs tick = 1, then on the next clock rising edge (i.e. cycle i + 1), the enable input is 1, hence the fsm state will be updated on cycle i + 1, thus updating the data_out.
+
+We do this simply by passing in the tick output of clktick.sv as the enable input of f1_fsm.sv, as follows:
+
+![top sv](images/[task3]top_sv.png)
+
+Next, we just need a simple testbench. Internally, the clktick module will output a tick every N + 1 cycles, thus causing the state to change, and thus data_out to change on the next cycle. Hence, all we need to do is to simply pass in the value of data_out to the vbdBar to set the state of the lights, as follows:
+
+![top testbench](images/[task3]top_tb.png)
+
+This gives us the following output. We can see that the FSM state changes every approximately 1 second.
+
+![vbuddy output 1](images/[task3]vbd_out_1.PNG)
+![vbuddy output 2](images/[task3]vbd_out_2.PNG)
+![vbuddy output 3](images/[task3]vbd_out_3.PNG)
+![vbuddy output 4](images/[task3]vbd_out_4.PNG)
